@@ -1,2 +1,7 @@
 uvicorn
 fastapi
+qrcode[pil]
+sqlalchemy
+python-multipart
+passlib[bcrypt]
+python-jose
