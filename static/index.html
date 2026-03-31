@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartProof Vault</title>
+    <style>
+        :root {
+            --bg-1: #07111f;
+            --bg-2: #0b1728;
+            --line: rgba(255, 255, 255, 0.10);
+            --line-soft: rgba(255, 255, 255, 0.06);
+            --text: #f4f7fb;
+            --muted: #aeb9c8;
+            --muted-2: #7f8da1;
+            --success: #8ce2ae;
+            --danger: #ff8c8c;
+            --warning: #ffd37a;
+            --shadow: 0 25px 80px rgba(0, 0, 0, 0.38);
+            --radius-xl: 30px;
+            --radius-lg: 22px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, "Segoe UI", Arial, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(900px 500px at 10% 0%, rgba(121, 168, 255, 0.16), transparent 60%),
+                radial-gradient(700px 500px at 100% 10%, rgba(197, 156, 255, 0.16), transparent 60%),
+                radial-gradient(700px 500px at 50% 100%, rgba(151, 231, 213, 0.10), transparent 60%),
+                linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 100%);
+            overflow-x: hidden;
+        }
+
+        .noise {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.045;
+            background-image:
+                radial-gradient(circle at 25% 25%, #ffffff 0.6px, transparent 0.7px),
+                radial-gradient(circle at 75% 75%, #ffffff 0.6px, transparent 0.7px);
+            background-size: 26px 26px, 22px 22px;
+            z-index: 0;
+        }
+
+        .orb {
+            position: fixed;
+            border-radius: 999px;
+            filter: blur(80px);
+            opacity: 0.22;
+            z-index: 0;
+            animation: drift 14s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 360px;
+            height: 360px;
+            top: 40px;
+            left: -60px;
+            background: #588cff;
+        }
+
+        .orb-2 {
+            width: 320px;
+            height: 320px;
+            right: -40px;
+            top: 180px;
+            background: #9e6dff;
+            animation-delay: 2s;
+        }
+
+        .orb-3 {
+            width: 280px;
+            height: 280px;
+            bottom: -20px;
+            left: 22%;
+            background: #4fd6b8;
+            animation-delay: 4s;
+        }
+
+        @keyframes drift {
+            0%, 100% {
+                transform: translate3d(0, 0, 0) scale(1);
+            }
+            50% {
+                transform: translate3d(0, -16px, 0) scale(1.05);
+            }
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            width: min(1220px, calc(100% - 40px));
+            margin: 34px auto;
+        }
+
+        .shell {
+            position: relative;
+            border: 1px solid var(--line);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.04));
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .shell::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(120deg, rgba(255,255,255,0.08), transparent 20%, transparent 80%, rgba(255,255,255,0.04));
+            pointer-events: none;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 22px 26px 18px;
+            border-bottom: 1px solid var(--line-soft);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .mark {
+            position: relative;
+            width: 62px;
+            height: 62px;
+            border-radius: 18px;
+            background:
+                linear-gradient(145deg, rgba(121, 168, 255, 0.95), rgba(197, 156, 255, 0.86));
+            display: grid;
+            place-items: center;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.35),
+                0 14px 35px rgba(64, 104, 255, 0.28);
+            overflow: hidden;
+        }
+
+        .mark::after {
+            content: "";
+            position: absolute;
+            inset: 1px;
+            border-radius: 17px;
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+
+        .mark span {
+            position: relative;
+            font-size: 27px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: white;
+        }
+
+        .brand-copy h1 {
+            margin: 0;
+            font-size: clamp(1.8rem, 3vw, 2.4rem);
+            letter-spacing: -0.045em;
+            line-height: 1;
+            font-weight: 760;
+        }
+
+        .brand-copy p {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 0.97rem;
+            max-width: 680px;
+            line-height: 1.55;
+        }
+
+        .state-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(140, 226, 174, 0.22);
+            background: rgba(140, 226, 174, 0.08);
+            color: var(--success);
+            font-size: 0.92rem;
+            white-space: nowrap;
+        }
+
+        .state-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--success);
+            box-shadow: 0 0 0 6px rgba(140, 226, 174, 0.10);
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 0;
+            border-bottom: 1px solid var(--line-soft);
+        }
+
+        .hero-left {
+            padding: 30px 26px 28px;
+            border-right: 1px solid var(--line-soft);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            margin-bottom: 18px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.09);
+            background: rgba(255,255,255,0.045);
+            color: var(--muted);
+            font-size: 0.84rem;
+            letter-spacing: 0.02em;
+        }
+
+        .hero-left h2 {
+            margin: 0;
+            max-width: 780px;
+            font-size: clamp(2rem, 4vw, 3.35rem);
+            line-height: 1.02;
+            letter-spacing: -0.06em;
+            font-weight: 800;
+        }
+
+        .hero-left h2 .accent {
+            color: #cfe0ff;
+        }
+
+        .hero-left p {
+            margin: 18px 0 0;
+            max-width: 720px;
+            color: var(--muted);
+            font-size: 1.02rem;
+            line-height: 1.7;
+        }
+
+        .stat-row {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 26px;
+        }
+
+        .stat {
+            min-width: 148px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            border: 1px solid var(--line-soft);
+            background: rgba(255,255,255,0.035);
+        }
+
+        .stat strong {
+            display: block;
+            font-size: 1.15rem;
+            letter-spacing: -0.03em;
+        }
+
+        .stat span {
+            display: block;
+            margin-top: 5px;
+            color: var(--muted-2);
+            font-size: 0.86rem;
+        }
+
+        .hero-right {
+            padding: 30px 26px 28px;
+            display: flex;
+            align-items: stretch;
+        }
+
+        .info-card {
+            width: 100%;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.09);
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.035));
+            padding: 22px 20px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        .info-card h3 {
+            margin: 0 0 12px;
+            font-size: 1.06rem;
+            letter-spacing: -0.02em;
+        }
+
+        .info-card p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.68;
+            font-size: 0.95rem;
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .info-tile {
+            padding: 14px 14px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+
+        .info-tile strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.92rem;
+        }
+
+        .info-tile span {
+            color: var(--muted);
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            padding: 26px;
+        }
+
+        .card {
+            border: 1px solid var(--line-soft);
+            border-radius: 26px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.03));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+            padding: 22px;
+            transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255,255,255,0.12);
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.05),
+                0 18px 40px rgba(0,0,0,0.22);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            letter-spacing: -0.03em;
+            font-weight: 720;
+        }
+
+        .card-sub {
+            color: var(--muted);
+            font-size: 0.93rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 8px;
+            color: #d3dceb;
+            font-size: 0.9rem;
+            font-weight: 550;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .input {
+            width: 100%;
+            padding: 15px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(7, 16, 29, 0.56);
+            color: var(--text);
+            outline: none;
+            font-size: 0.97rem;
+            transition: border-color 0.24s ease, box-shadow 0.24s ease, transform 0.24s ease;
+        }
+
+        .input::placeholder {
+            color: #7d8aa0;
+        }
+
+        .input:focus {
+            border-color: rgba(121, 168, 255, 0.55);
+            box-shadow: 0 0 0 4px rgba(121, 168, 255, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 18px 0 16px;
+        }
+
+        .btn {
+            position: relative;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            border-radius: 15px;
+            padding: 13px 18px;
+            font-size: 0.95rem;
+            font-weight: 650;
+            transition: transform 0.22s ease, box-shadow 0.22s ease, opacity 0.22s ease, background 0.22s ease;
+        }
+
+        .btn:active {
+            transform: translateY(1px) scale(0.995);
+        }
+
+        .btn-primary {
+            color: white;
+            background: linear-gradient(135deg, #5f8fff, #8f6bff);
+            box-shadow: 0 12px 28px rgba(90, 115, 255, 0.30);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 34px rgba(90, 115, 255, 0.38);
+        }
+
+        .btn-soft {
+            color: #ecf2ff;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.10);
+        }
+
+        .btn-soft:hover {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.11);
+        }
+
+        .btn-danger {
+            color: white;
+            background: rgba(255, 70, 70, 0.15);
+            border: 1px solid rgba(255, 90, 90, 0.20);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 70, 70, 0.22);
+        }
+
+        .token-shell {
+            margin-top: 14px;
+        }
+
+        .token-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .token-label span {
+            color: #d6e0f0;
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+
+        .token-box {
+            width: 100%;
+            min-height: 140px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(4, 10, 20, 0.56);
+            color: #e7eef9;
+            padding: 16px;
+            resize: vertical;
+            outline: none;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .result-box {
+            min-height: 170px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background:
+                linear-gradient(180deg, rgba(4, 10, 20, 0.68), rgba(9, 17, 31, 0.72));
+            padding: 18px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            line-height: 1.6;
+            color: #edf4ff;
+            position: relative;
+        }
+
+        .result-box::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 4px;
+            border-radius: 20px 0 0 20px;
+            background: linear-gradient(180deg, #6ca0ff, #8adfd2);
+        }
+
+        .stack {
+            display: grid;
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .insight {
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+        }
+
+        .insight strong {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 0.96rem;
+        }
+
+        .insight span {
+            color: var(--muted);
+            font-size: 0.91rem;
+            line-height: 1.58;
+        }
+
+        .status-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .status-line .pulse {
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            background: #7fb5ff;
+            box-shadow: 0 0 0 0 rgba(127, 181, 255, 0.45);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(127, 181, 255, 0.45);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(127, 181, 255, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(127, 181, 255, 0);
+            }
+        }
+
+        .upload-dropzone {
+            border: 1px dashed rgba(255,255,255,0.15);
+            border-radius: 18px;
+            padding: 18px;
+            background: rgba(255,255,255,0.03);
+            transition: 0.22s ease;
+        }
+
+        .upload-dropzone.dragover {
+            border-color: rgba(121, 168, 255, 0.65);
+            background: rgba(121, 168, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(121, 168, 255, 0.08);
+        }
+
+        .dropzone-title {
+            font-weight: 650;
+            margin-bottom: 6px;
+        }
+
+        .dropzone-sub {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .selected-file {
+            margin-top: 12px;
+            font-size: 0.9rem;
+            color: #dce7f9;
+        }
+
+        .file-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .file-item {
+            padding: 14px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+        }
+
+        .file-item-grid {
+            display: grid;
+            grid-template-columns: 74px 1fr;
+            gap: 14px;
+            align-items: start;
+        }
+
+        .file-thumb {
+            width: 74px;
+            height: 74px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #dce7f9;
+            font-size: 0.8rem;
+            text-align: center;
+            padding: 6px;
+        }
+
+        .file-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .file-top {
+            display: flex;
+            align-items: start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .file-name {
+            font-weight: 650;
+            color: #eef4ff;
+            word-break: break-word;
+        }
+
+        .file-meta {
+            margin-top: 6px;
+            color: var(--muted-2);
+            font-size: 0.85rem;
+        }
+
+        .badge-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            color: #eef4ff;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.09);
+        }
+
+        .badge.pdf {
+            background: rgba(255, 90, 90, 0.13);
+            border-color: rgba(255, 90, 90, 0.18);
+        }
+
+        .badge.image {
+            background: rgba(121, 168, 255, 0.13);
+            border-color: rgba(121, 168, 255, 0.18);
+        }
+
+        .badge.other {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .file-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .preview-panel {
+            display: none;
+            margin-top: 14px;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+        }
+
+        .preview-panel.active {
+            display: block;
+        }
+
+        .preview-panel iframe,
+        .preview-panel img {
+            width: 100%;
+            max-height: 420px;
+            border: none;
+            border-radius: 14px;
+            background: white;
+            object-fit: contain;
+        }
+
+        .empty-state {
+            color: var(--muted);
+            font-size: 0.92rem;
+            padding: 8px 0;
+        }
+
+        @media (max-width: 980px) {
+            .hero,
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-left {
+                border-right: none;
+                border-bottom: 1px solid var(--line-soft);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                width: min(100% - 20px, 1180px);
+                margin: 12px auto;
+            }
+
+            .shell {
+                border-radius: 22px;
+            }
+
+            .topbar,
+            .hero-left,
+            .hero-right,
+            .workspace {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            .actions,
+            .file-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .file-item-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .file-thumb {
+                width: 100%;
+                height: 180px;
+            }
+
+            .file-top {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="noise"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <main class="page">
+        <section class="shell">
+            <header class="topbar">
+                <div class="brand">
+                    <div class="mark"><span>S</span></div>
+                    <div class="brand-copy">
+                        <h1>SmartProof Vault</h1>
+                        <p>Secure authentication with a calmer, more crafted interface. Soft, precise, and intentional.</p>
+                    </div>
+                </div>
+                <div class="state-chip">
+                    <span class="state-dot"></span>
+                    Backend Connected
+                </div>
+            </header>
+
+            <section class="hero">
+                <div class="hero-left">
+                    <div class="eyebrow">Private access · JWT secured</div>
+                    <h2>
+                        A quieter interface
+                        <span class="accent">for serious access flows.</span>
+                    </h2>
+                    <p>
+                        This version is designed to feel less like a template and more like a product:
+                        softer surfaces, clearer rhythm, calmer gradients, and better visual breathing.
+                    </p>
+
+                    <div class="stat-row">
+                        <div class="stat">
+                            <strong>JWT</strong>
+                            <span>Persistent token flow</span>
+                        </div>
+                        <div class="stat">
+                            <strong>Secure</strong>
+                            <span>Protected profile route</span>
+                        </div>
+                        <div class="stat">
+                            <strong>Vault</strong>
+                            <span>Private user documents</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-right">
+                    <div class="info-card">
+                        <h3>Design Intent</h3>
+                        <p>
+                            Instead of loud gradients everywhere, this UI uses controlled contrast, sculpted cards,
+                            cleaner grouping, and softer motion so it feels more human and less auto-generated.
+                        </p>
+
+                        <div class="info-grid">
+                            <div class="info-tile">
+                                <strong>Soft hierarchy</strong>
+                                <span>Important actions stand out without the whole screen shouting.</span>
+                            </div>
+                            <div class="info-tile">
+                                <strong>Micro motion</strong>
+                                <span>Subtle drift, pulse, and hover lift create energy without distraction.</span>
+                            </div>
+                            <div class="info-tile">
+                                <strong>Vault flow</strong>
+                                <span>Login, upload, preview, download, and manage documents in one place.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="workspace">
+                <section class="card">
+                    <div class="card-header">
+                        <div class="card-title">Authentication & Vault</div>
+                    </div>
+                    <div class="card-sub">
+                        Sign in, keep your token saved locally, upload documents, and manage your private vault.
+                    </div>
+
+                    <div class="field">
+                        <label for="username">Username</label>
+                        <div class="input-wrap">
+                            <input class="input" type="text" id="username" placeholder="Enter your username">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="password">Password</label>
+                        <div class="input-wrap">
+                            <input class="input" type="password" id="password" placeholder="Enter your password">
+                        </div>
+                    </div>                    
+ <div class="field">
+    <label for="signupEmail">Email</label>
+    <div class="input-wrap">
+        <input class="input" type="email" id="signupEmail" placeholder="Enter your email for signup">
+    </div>
+</div>   
+                    <div class="actions">
+    <button class="btn btn-primary" onclick="loginUser()">Login</button>
+    <button class="btn btn-soft" onclick="signupUser()">Sign Up</button>
+    <button class="btn btn-soft" onclick="logoutUser()">Logout</button>
+    <button class="btn btn-soft" onclick="copyToken()">Copy Token</button>
+</div>
+
+                    <div class="token-shell">
+                        <div class="token-label">
+                            <span>Token Storage</span>
+                        </div>
+                        <textarea id="tokenBox" class="token-box" readonly placeholder="Your token will appear here after login..."></textarea>
+                    </div>
+
+                    <div class="field" style="margin-top: 18px;">
+                        <label for="fileInput">Upload Document</label>
+                        <div class="field">
+    <label for="docTitle">Document Title</label>
+    <div class="input-wrap">
+        <input class="input" type="text" id="docTitle" placeholder="e.g. Aadhaar Card, PAN Card, Degree Certificate">
+    </div>
+</div>
+
+<div class="field">
+    <label for="docCategory">Category</label>
+    <div class="input-wrap">
+        <input class="input" type="text" id="docCategory" placeholder="e.g. Identity, Education, Finance, Medical">
+    </div>
+</div>
+
+<div class="field">
+    <label for="docDescription">Description</label>
+    <div class="input-wrap">
+        <input class="input" type="text" id="docDescription" placeholder="Short note about this document">
+    </div>
+</div>
+
+<div class="field">
+    <label for="issuerName">Issuer Name</label>
+    <div class="input-wrap">
+        <input class="input" type="text" id="issuerName" placeholder="e.g. Government of India, University name">
+    </div>
+</div>
+
+<div class="field">
+    <label for="issueDate">Issue Date</label>
+    <div class="input-wrap">
+        <input class="input" type="date" id="issueDate">
+    </div>
+</div>
+
+<div class="field">
+    <label for="expiryDate">Expiry Date</label>
+    <div class="input-wrap">
+        <input class="input" type="date" id="expiryDate">
+    </div>
+</div>
+                        <div class="upload-dropzone" id="dropzone">
+                            <div class="dropzone-title">Drag & drop your file here</div>
+                            <div class="dropzone-sub">or use the file picker below</div>
+                            <div class="selected-file" id="selectedFileText">No file selected</div>
+                        </div>
+                        <div class="input-wrap" style="margin-top: 12px;">
+                            <input class="input" type="file" id="fileInput">
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button class="btn btn-primary" onclick="uploadDocument()">Upload File</button>
+                        <button class="btn btn-soft" onclick="loadMyFiles()">Load My Files</button>
+                    </div>
+
+                    <div class="status-line">
+                        <span class="pulse"></span>
+                        <span>Session state is preserved locally until logout.</span>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="card-header">
+                        <div class="card-title">Protected Profile & Files</div>
+                    </div>
+                    <div class="card-sub">
+                        Access your protected profile, inspect API responses, and view only your uploaded files.
+                    </div>
+
+                    <div class="actions">
+                        <button class="btn btn-primary" onclick="getProfile()">Get Profile</button>
+                    </div>
+
+                    <pre id="result" class="result-box">No request made yet.</pre>
+
+                    <div class="stack">
+                        <div class="insight">
+                            
+                            <div class="insight" id="expiryPanel">
+    <strong>Expiry Alerts</strong>
+    <div id="expiryAlerts" class="empty-state">No expiry alerts yet.</div>
+</div>
+
+                            <strong>My Files</strong>
+                            <div id="statsRow" class="stat-row" style="margin-top: 14px; margin-bottom: 14px;">
+    <div class="stat">
+        <strong id="totalFilesStat">0</strong>
+        <span>Total Files</span>
+    </div>
+    <div class="stat">
+        <strong id="imageFilesStat">0</strong>
+        <span>Images</span>
+    </div>
+    <div class="stat">
+        <strong id="pdfFilesStat">0</strong>
+        <span>PDFs</span>
+    </div>
+    <div class="stat">
+        <strong id="expiryFilesStat">0</strong>
+        <span>With Expiry</span>
+    </div>
+</div>
+
+<div class="field" style="margin-top: 12px;">
+    <div class="input-wrap">
+        <input class="input" type="text" id="searchInput" placeholder="Search by filename, title, category, issuer..." oninput="applyFilters()">
+    </div>
+</div>
+
+<div class="field">
+    <div class="input-wrap">
+        <select class="input" id="categoryFilter" onchange="applyFilters()">
+            <option value="">All Categories</option>
+            <option value="ID">ID</option>
+            <option value="Education">Education</option>
+            <option value="Finance">Finance</option>
+            <option value="Medical">Medical</option>
+            <option value="Certificates">Certificates</option>
+            <option value="Other">Other</option>
+        </select>
+    </div>
+</div>
+
+<div class="actions" style="margin-top: 8px;">
+    <button class="btn btn-soft" onclick="resetFilters()">Reset</button>
+</div>
+
+<div id="filesList" class="file-list">
+    <div class="empty-state">No files loaded yet.</div>
+</div>
+
+                        <div class="insight">
+                            <strong>How it works</strong>
+                            <span>
+                                Login returns a JWT. The frontend stores it in localStorage and sends it back
+                                in the Authorization header for protected requests and secure file actions.
+                            </span>
+                        </div>
+
+                        <div class="insight">
+                            <strong>Why this feels better</strong>
+                            <span>
+                                The layout is less symmetrical, spacing is more natural, and the visual weight is distributed
+                                more intentionally so it feels designed rather than assembled.
+                            </span>
+                        </div>
+                    </div>
+                </section>
+            </section>
+        </section>
+    </main>
+
+    <script>
+        let savedToken = localStorage.getItem("token") || "";
+        let expiryPopupShown = false;
+        let selectedFile = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            
+            if (savedToken) {
+                document.getElementById("tokenBox").value = savedToken;
+            }
+            if ("Notification" in window && Notification.permission !== "granted") {
+    Notification.requestPermission();
+}
+
+            const fileInput = document.getElementById("fileInput");
+            const dropzone = document.getElementById("dropzone");
+
+            fileInput.addEventListener("change", () => {
+                selectedFile = fileInput.files[0] || null;
+                updateSelectedFileText();
+            });
+
+            dropzone.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                dropzone.classList.add("dragover");
+            });
+
+            dropzone.addEventListener("dragleave", () => {
+                dropzone.classList.remove("dragover");
+            });
+
+            dropzone.addEventListener("drop", (e) => {
+                e.preventDefault();
+                dropzone.classList.remove("dragover");
+
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    selectedFile = e.dataTransfer.files[0];
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(selectedFile);
+                    fileInput.files = dataTransfer.files;
+                    updateSelectedFileText();
+                }
+            });
+        });
+
+        function updateSelectedFileText() {
+            const el = document.getElementById("selectedFileText");
+            if (!selectedFile) {
+                el.textContent = "No file selected";
+                return;
+            }
+
+            const sizeKb = (selectedFile.size / 1024).toFixed(1);
+            el.textContent = `${selectedFile.name} · ${sizeKb} KB`;
+        }
+
+        async function loginUser() {
+            const resultBox = document.getElementById("result");
+            resultBox.textContent = "Logging in...";
+
+            try {
+                const username = document.getElementById("username").value;
+                const password = document.getElementById("password").value;
+
+                const response = await fetch("http://127.0.0.1:8000/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.access_token) {
+                    savedToken = data.access_token;
+                    localStorage.setItem("token", savedToken);
+                    document.getElementById("tokenBox").value = savedToken;
+                    resultBox.textContent = "Login successful";
+                } else {
+                    resultBox.textContent = JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultBox.textContent = "Error: " + error.message;
+                console.error(error);
+            }
+        }
+
+        async function signupUser() {
+    const resultBox = document.getElementById("result");
+    resultBox.textContent = "Creating account...";
+
+    try {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        const email = document.getElementById("signupEmail").value;
+
+        if (!username || !password || !email) {
+            resultBox.textContent = "Please fill username, password, and email";
+            return;
+        }
+
+        const response = await fetch("http://127.0.0.1:8000/signup", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username: username,
+                email: email,
+                password: password
+            })
+        });
+
+        const data = await response.json();
+        resultBox.textContent = JSON.stringify(data, null, 2);
+    } catch (error) {
+        resultBox.textContent = "Error: " + error.message;
+        console.error(error);
+    }
+}
+
+        async function getProfile() {
+            try {
+                const response = await fetch("http://127.0.0.1:8000/profile", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + savedToken
+                    }
+                });
+
+                const data = await response.json();
+                document.getElementById("result").textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById("result").textContent = "Error: " + error.message;
+                console.error(error);
+            }
+        }
+
+async function uploadDocument() {
+    const resultBox = document.getElementById("result");
+
+    if (!savedToken) {
+        resultBox.textContent = "Please login first";
+        return;
+    }
+
+    if (!selectedFile) {
+        resultBox.textContent = "Please choose a file first";
+        return;
+    }
+
+    const title = document.getElementById("docTitle").value;
+    const category = document.getElementById("docCategory").value;
+    const description = document.getElementById("docDescription").value;
+    const issuerName = document.getElementById("issuerName").value;
+    const issueDate = document.getElementById("issueDate").value;
+    const expiryDate = document.getElementById("expiryDate").value;
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+    formData.append("title", title);
+    formData.append("category", category);
+    formData.append("description", description);
+    formData.append("issuer_name", issuerName);
+    formData.append("issue_date", issueDate);
+    formData.append("expiry_date", expiryDate);
+
+    try {
+        resultBox.textContent = "Uploading file...";
+
+        const response = await fetch("http://127.0.0.1:8000/upload", {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + savedToken
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+        resultBox.textContent = JSON.stringify(data, null, 2);
+
+        if (response.ok) {
+            selectedFile = null;
+            document.getElementById("fileInput").value = "";
+            document.getElementById("docTitle").value = "";
+            document.getElementById("docCategory").value = "";
+            document.getElementById("docDescription").value = "";
+            document.getElementById("issuerName").value = "";
+            document.getElementById("issueDate").value = "";
+            document.getElementById("expiryDate").value = "";
+            updateSelectedFileText();
+            loadMyFiles();
+        }
+    } catch (error) {
+        resultBox.textContent = "Error: " + error.message;
+        console.error(error);
+    }
+}
+
+async function loadMyFiles() {
+    const filesList = document.getElementById("filesList");
+    const resultBox = document.getElementById("result");
+
+    if (!savedToken) {
+        resultBox.textContent = "Please login first";
+        return;
+    }
+
+    try {
+        filesList.innerHTML = `<div class="empty-state">Loading files...</div>`;
+
+        const response = await fetch("http://127.0.0.1:8000/my-files", {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + savedToken
+            }
+        });
+
+        const data = await response.json();
+
+        allFiles = data.files || [];
+
+        if (allFiles.length === 0) {
+            filesList.innerHTML = `<div class="empty-state">No files found.</div>`;
+            return;
+        }
+
+        renderFiles(allFiles);
+    } catch (error) {
+        resultBox.textContent = "Error: " + error.message;
+        console.error(error);
+    }
+}
+
+function updateStats(files) {
+    const total = files.length;
+    const images = files.filter(file => getFileType(file.filename) === "IMAGE").length;
+    const pdfs = files.filter(file => getFileType(file.filename) === "PDF").length;
+    const expiry = files.filter(file => file.expiry_date && file.expiry_date.trim() !== "").length;
+
+    document.getElementById("totalFilesStat").textContent = total;
+    document.getElementById("imageFilesStat").textContent = images;
+    document.getElementById("pdfFilesStat").textContent = pdfs;
+    document.getElementById("expiryFilesStat").textContent = expiry;
+}
+function updateExpiryAlerts(files) {
+    const alertsBox = document.getElementById("expiryAlerts");
+
+    if (!files || files.length === 0) {
+        alertsBox.innerHTML = "No expiry alerts yet.";
+        return;
+    }
+
+    const today = new Date();
+
+    const expiredFiles = [];
+    const expiringSoonFiles = [];
+
+    files.forEach(file => {
+        if (!file.expiry_date) return;
+
+        const expiryDate = new Date(file.expiry_date);
+        const diffDays = (expiryDate - today) / (1000 * 60 * 60 * 24);
+
+        if (diffDays < 0) {
+            expiredFiles.push(file);
+        } else if (diffDays <= 30) {
+            expiringSoonFiles.push(file);
+        }
+    });
+
+    let html = "";
+
+    if (expiredFiles.length > 0) {
+        html += `
+            <div style="margin-bottom:12px;">
+                <strong style="color:#ff8c8c;">Expired</strong>
+                ${expiredFiles.map(file => `
+                    <div class="file-meta" style="margin-top:6px;">
+                        ${escapeHtml(file.title || file.filename)} — ${escapeHtml(file.expiry_date)}
+                    </div>
+                `).join("")}
+            </div>
+        `;
+    }
+
+    if (expiringSoonFiles.length > 0) {
+        html += `
+            <div>
+                <strong style="color:#ffd37a;">Expiring Soon</strong>
+                ${expiringSoonFiles.map(file => `
+                    <div class="file-meta" style="margin-top:6px;">
+                        ${escapeHtml(file.title || file.filename)} — ${escapeHtml(file.expiry_date)}
+                    </div>
+                `).join("")}
+            </div>
+        `;
+    }
+
+    alertsBox.innerHTML = html || "No expiry alerts yet.";
+}
+
+function showExpiryPopup(files) {
+    const popup = document.getElementById("expiryPopup");
+    const content = document.getElementById("expiryPopupContent");
+
+    if (!popup || !content || !files || files.length === 0) {
+        return;
+    }
+
+    const today = new Date();
+    const expiredFiles = [];
+    const expiringSoonFiles = [];
+
+    files.forEach(file => {
+        if (!file.expiry_date) return;
+
+        const expiryDate = new Date(file.expiry_date);
+        const diffDays = (expiryDate - today) / (1000 * 60 * 60 * 24);
+
+        if (diffDays < 0) {
+            expiredFiles.push(file);
+        } else if (diffDays <= 30) {
+            expiringSoonFiles.push(file);
+        }
+    });
+
+    if (expiredFiles.length === 0 && expiringSoonFiles.length === 0) {
+        popup.style.display = "none";
+        return;
+    }
+
+    let html = "";
+
+    if (expiredFiles.length > 0) {
+        html += `
+            <div style="margin-bottom:10px;">
+                <div style="color:#ff8c8c;font-weight:700;">Expired Documents</div>
+                ${expiredFiles.map(file => `
+                    <div style="margin-top:6px;">
+                        ${escapeHtml(file.title || file.filename)} — ${escapeHtml(file.expiry_date)}
+                    </div>
+                `).join("")}
+            </div>
+        `;
+    }
+
+    if (expiringSoonFiles.length > 0) {
+        html += `
+            <div>
+                <div style="color:#ffd37a;font-weight:700;">Expiring Soon</div>
+                ${expiringSoonFiles.map(file => `
+                    <div style="margin-top:6px;">
+                        ${escapeHtml(file.title || file.filename)} — ${escapeHtml(file.expiry_date)}
+                    </div>
+                `).join("")}
+            </div>
+        `;
+    }
+
+    content.innerHTML = html;
+    popup.style.display = "block";
+    expiryPopupShown = true;
+    if ("Notification" in window && Notification.permission === "granted") {
+    let message = "";
+
+    if (expiredFiles.length > 0) {
+        message += `${expiredFiles.length} expired document(s). `;
+    }
+
+    if (expiringSoonFiles.length > 0) {
+        message += `${expiringSoonFiles.length} document(s) expiring soon.`;
+    }
+
+    if (message.trim()) {
+        new Notification("SmartProof Vault", {
+            body: message.trim()
+        });
+    }
+}
+}
+
+function closeExpiryPopup() {
+    const popup = document.getElementById("expiryPopup");
+    if (popup) {
+        popup.style.display = "none";
+    }
+}
+
+function renderFiles(files) {
+    const filesList = document.getElementById("filesList");
+    updateStats(files);
+updateExpiryAlerts(files);
+showExpiryPopup(files);
+
+    if (!files || files.length === 0) {
+        filesList.innerHTML = `<div class="empty-state">No matching files found.</div>`;
+        return;
+    }
+
+    filesList.innerHTML = files.map(file => {
+        let expiryBadge = "";
+
+if (file.expiry_date) {
+    const today = new Date();
+    const expiryDate = new Date(file.expiry_date);
+    const diffDays = (expiryDate - today) / (1000 * 60 * 60 * 24);
+
+    if (diffDays < 0) {
+        expiryBadge = `<span class="badge" style="background:#ff4d4d;">Expired</span>`;
+    } else if (diffDays <= 30) {
+        expiryBadge = `<span class="badge" style="background:#ffb84d;">Expiring Soon</span>`;
+    }
+}
+        const type = getFileType(file.filename);
+        const badgeClass = type === "PDF" ? "pdf" : type === "IMAGE" ? "image" : "other";
+
+        const previewHtml = type === "IMAGE"
+            ? `<img src="http://127.0.0.1:8000/download/${file.id}" alt="${escapeHtml(file.filename)}">`
+            : type === "PDF"
+                ? `<iframe src="http://127.0.0.1:8000/download/${file.id}"></iframe>`
+                : `<div class="empty-state">Preview not available for this file type.</div>`;
+
+        const thumbHtml = type === "IMAGE"
+            ? `<img src="http://127.0.0.1:8000/download/${file.id}" alt="${escapeHtml(file.filename)}">`
+            : `<div>${type}</div>`;
+
+        return `
+            <div class="file-item">
+                <div class="file-item-grid">
+                    <div class="file-thumb">${thumbHtml}</div>
+                    <div>
+                        <div class="file-top">
+                            <div>
+                                <div class="file-name">${escapeHtml(file.filename)}</div>
+                                <div class="file-meta">Document ID: ${file.id}</div>
+                            </div>
+                        </div>
+
+                        <div class="badge-row">
+    <span class="badge ${badgeClass}">${type}</span>
+    ${file.category ? `<span class="badge other">${escapeHtml(file.category)}</span>` : ""}
+    ${expiryBadge}
+</div>
+    
+                        <div class="file-meta" style="margin-top:10px;">
+                            ${file.title ? `<div><strong>Title:</strong> ${escapeHtml(file.title)}</div>` : ""}
+                            ${file.description ? `<div><strong>Description:</strong> ${escapeHtml(file.description)}</div>` : ""}
+                            ${file.issuer_name ? `<div><strong>Issuer:</strong> ${escapeHtml(file.issuer_name)}</div>` : ""}
+                            ${file.issue_date ? `<div><strong>Issue Date:</strong> ${escapeHtml(file.issue_date)}</div>` : ""}
+                            ${file.expiry_date ? `<div><strong>Expiry Date:</strong> ${escapeHtml(file.expiry_date)}</div>` : ""}
+                            ${file.verification_code ? `<button class="btn btn-soft" onclick="openVerification('${file.verification_code}')">Verify</button>` : ""}
+                            ${file.qr_url ? `
+    <div style="margin-top:10px;">
+        <a href="/verify/${file.verification_code}" target="_blank">
+            <img src="${file.qr_url}" alt="QR Code" style="width:90px;height:90px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:white;padding:6px;">
+        </a>
+        <div>
+            <button class="btn btn-soft" style="margin-top:8px;" onclick="copyVerifyLink('${file.verification_code}')">
+                Copy Verify Link
+            </button>
+        </div>
+    </div>
+` : ""}
+                        </div>
+
+                        <div class="file-actions">
+    <button class="btn btn-soft" onclick="togglePreview(${file.id})">Preview</button>
+    <button class="btn btn-soft" onclick="downloadFile(${file.id}, '${escapeAttribute(file.filename)}')">Download</button>
+    ${file.verification_code ? `<button class="btn btn-soft" onclick="openVerification('${escapeAttribute(file.verification_code)}')">Verify</button>` : ""}
+    <button class="btn btn-danger" onclick="deleteFile(${file.id})">Delete</button>
+</div>
+
+                        <div id="preview-${file.id}" class="preview-panel">
+                            ${previewHtml}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+function copyVerifyLink(code) {
+    const link = `${window.location.origin}/verify/${code}`;
+    navigator.clipboard.writeText(link);
+    alert("Link copied!");
+}
+function openVerification(code) {
+    window.open(`http://127.0.0.1:8000/verify/${code}`, "_blank");
+}
+
+function applyFilters() {
+    const search = document.getElementById("searchInput").value.toLowerCase().trim();
+    const category = document.getElementById("categoryFilter").value;
+
+    const filtered = allFiles.filter(file => {
+        const matchesSearch =
+            (file.filename && file.filename.toLowerCase().includes(search)) ||
+            (file.title && file.title.toLowerCase().includes(search)) ||
+            (file.category && file.category.toLowerCase().includes(search)) ||
+            (file.description && file.description.toLowerCase().includes(search)) ||
+            (file.issuer_name && file.issuer_name.toLowerCase().includes(search));
+
+        const matchesCategory =
+            category === "" ||
+            (file.category && file.category.toLowerCase() === category.toLowerCase());
+
+        return matchesSearch && matchesCategory;
+    });
+
+    renderFiles(filtered);
+}
+
+function resetFilters() {
+    document.getElementById("searchInput").value = "";
+    document.getElementById("categoryFilter").value = "";
+    renderFiles(allFiles);
+}
+
+
+
+        function togglePreview(fileId) {
+            const panel = document.getElementById(`preview-${fileId}`);
+            if (!panel) return;
+            panel.classList.toggle("active");
+        }
+
+        async function downloadFile(fileId, filename) {
+            const resultBox = document.getElementById("result");
+
+            if (!savedToken) {
+                resultBox.textContent = "Please login first";
+                return;
+            }
+
+            try {
+                resultBox.textContent = "Preparing download...";
+
+                const response = await fetch(`http://127.0.0.1:8000/download/${fileId}`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + savedToken
+                    }
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    resultBox.textContent = JSON.stringify(data, null, 2);
+                    return;
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = filename || "document";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+
+                window.URL.revokeObjectURL(url);
+                resultBox.textContent = "Download started";
+            } catch (error) {
+                resultBox.textContent = "Error: " + error.message;
+                console.error(error);
+            }
+        }
+
+        async function deleteFile(fileId) {
+            const resultBox = document.getElementById("result");
+
+            if (!savedToken) {
+                resultBox.textContent = "Please login first";
+                return;
+            }
+
+            const confirmed = confirm("Delete this file from your vault?");
+            if (!confirmed) return;
+
+            try {
+                resultBox.textContent = "Deleting file...";
+
+                const response = await fetch(`http://127.0.0.1:8000/delete/${fileId}`, {
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": "Bearer " + savedToken
+                    }
+                });
+
+                const data = await response.json();
+                resultBox.textContent = JSON.stringify(data, null, 2);
+
+                if (response.ok) {
+                    loadMyFiles();
+                }
+            } catch (error) {
+                resultBox.textContent = "Error: " + error.message;
+                console.error(error);
+            }
+        }
+
+        function logoutUser() {
+            savedToken = "";
+            localStorage.removeItem("token");
+            document.getElementById("tokenBox").value = "";
+            document.getElementById("result").textContent = "Logged out";
+            document.getElementById("filesList").innerHTML = `<div class="empty-state">No files loaded yet.</div>`;
+            selectedFile = null;
+            document.getElementById("fileInput").value = "";
+            updateSelectedFileText();
+        }
+
+        function copyToken() {
+            const token = document.getElementById("tokenBox").value;
+            if (!token) {
+                document.getElementById("result").textContent = "No token available to copy";
+                return;
+            }
+
+            navigator.clipboard.writeText(token);
+            document.getElementById("result").textContent = "Token copied to clipboard";
+        }
+
+        function getFileType(filename) {
+            const ext = filename.split(".").pop()?.toLowerCase() || "";
+            if (["jpg", "jpeg", "png", "gif", "webp", "bmp"].includes(ext)) return "IMAGE";
+            if (ext === "pdf") return "PDF";
+            return ext ? ext.toUpperCase() : "FILE";
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        function escapeAttribute(value) {
+            return String(value)
+                .replaceAll("\\", "\\\\")
+                .replaceAll("'", "\\'");
+        }
+    </script>
+</body>
+<div id="expiryPopup" style="
+    display:none;
+    position:fixed;
+    top:24px;
+    right:24px;
+    width:340px;
+    z-index:9999;
+    background:rgba(15, 23, 42, 0.96);
+    color:white;
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:18px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.35);
+    padding:18px;
+    backdrop-filter:blur(12px);
+">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <strong style="font-size:1rem;">Expiry Reminder</strong>
+        <button onclick="closeExpiryPopup()" style="
+            background:none;
+            border:none;
+            color:#cbd5e1;
+            font-size:18px;
+            cursor:pointer;
+        ">×</button>
+    </div>
+    <div id="expiryPopupContent" style="margin-top:10px;color:#cbd5e1;line-height:1.5;">
+        No alerts
+    </div>
+</div>
+</html>

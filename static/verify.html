@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Document Verification</title>
+<style>
+body {
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.card {
+    background: #1e293b;
+    padding: 30px;
+    border-radius: 16px;
+    width: 400px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+.badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+.success { background: #16a34a; }
+.error { background: #dc2626; }
+</style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Document Verification</h2>
+    <div id="status"></div>
+    <div id="details" style="margin-top:15px;"></div>
+</div>
+
+<script>
+const code = window.location.pathname.split("/").pop();
+
+fetch(`/api/verify/${code}`)
+.then(res => res.json())
+.then(data => {
+    const status = document.getElementById("status");
+    const details = document.getElementById("details");
+
+    if (data && data.verified === true) {
+        status.innerHTML = `<span class="badge success">Verified</span>`;
+
+        details.innerHTML = `
+            <p><strong>Title:</strong> ${data.title || "-"}</p>
+            <p><strong>File:</strong> ${data.filename}</p>
+            <p><strong>Category:</strong> ${data.category || "-"}</p>
+            <p><strong>Issuer:</strong> ${data.issuer_name || "-"}</p>
+            <p><strong>Issue Date:</strong> ${data.issue_date || "-"}</p>
+            <p><strong>Expiry Date:</strong> ${data.expiry_date || "-"}</p>
+            <p><strong>Code:</strong> ${data.verification_code}</p>
+        `;
+    } else {
+        status.innerHTML = `<span class="badge error">Invalid Code</span>`;
+    }
+})
+.catch((err) => {
+    console.error(err);
+    document.getElementById("status").innerHTML =
+        `<span class="badge error">Server Error</span>`;
+});
+</script>
+
+</body>
+</html>
